@@ -1,0 +1,15 @@
+.card {
+  border: 1px solid var(--warm-rule);
+  background: var(--cream);
+  padding: 20px;
+}
+
+.cardHover {
+  composes: card;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.cardHover:hover {
+  background: var(--cream-deep);
+}

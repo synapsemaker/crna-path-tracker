@@ -1,0 +1,210 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── NAV ── */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 max(24px, calc((100% - 1100px) / 2));
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--cream);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  padding: 18px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  position: relative;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tabActive {
+  color: var(--ink);
+}
+
+.tabActive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: var(--ink);
+}
+
+.signOut {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.signOut:hover {
+  color: var(--ink);
+}
+
+/* ── MORE DROPDOWN ── */
+.moreWrap {
+  position: relative;
+}
+
+.moreDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--cream);
+  border: 1px solid var(--warm-rule);
+  padding: 8px 0;
+  min-width: 180px;
+  z-index: 200;
+}
+
+.moreItem {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  padding: 8px 16px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.moreItem:hover {
+  color: var(--ink);
+  background: var(--accent-wash);
+}
+
+.moreItemActive {
+  color: var(--ink);
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  padding: 32px max(24px, calc((100% - 1100px) / 2)) 64px;
+}
+
+/* ── MOBILE ── */
+.burger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.burger span {
+  display: block;
+  width: 18px;
+  height: 1.5px;
+  background: var(--ink);
+  transition: transform 0.2s;
+}
+
+.mobileMenu {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .tabs {
+    display: none;
+  }
+
+  .signOut {
+    display: none;
+  }
+
+  .burger {
+    display: flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobileMenu {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    background: var(--cream);
+  }
+
+  .mobileMenu a,
+  .mobileMenu button {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--taupe);
+    padding: 14px 24px;
+    border: none;
+    border-bottom: 0.5px solid var(--border);
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .mobileMenu a:hover,
+  .mobileMenu button:hover {
+    color: var(--ink);
+  }
+
+  .nav {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 16px 24px;
+  }
+
+  .main {
+    padding: 24px 24px 48px;
+  }
+}
