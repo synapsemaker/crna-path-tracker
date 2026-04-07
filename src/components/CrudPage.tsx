@@ -70,7 +70,12 @@ export default function CrudPage<T extends { id: string }>({
     setSaving(true);
 
     const { id: _id, created_at: _ca, ...rest } = formData;
-    const data = { ...rest, user_id: userId };
+    // Convert empty strings to null for Supabase
+    const cleaned: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(rest)) {
+      cleaned[k] = v === "" ? null : v;
+    }
+    const data = { ...cleaned, user_id: userId };
 
     if (editingId) {
       const { data: updated } = await supabase
