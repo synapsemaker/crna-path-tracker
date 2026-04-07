@@ -117,8 +117,17 @@ export default async function DashboardPage() {
     summarySentence = parts.join(" · ");
   }
 
-  // Top 3 schools for pipeline display
-  const pipelineSchools = schools.slice(0, 5);
+  // Pipeline display: prioritize schools with upcoming deadlines, then by created date
+  const pipelineSchools = [...schools]
+    .sort((a, b) => {
+      const aDate = a.application_deadline;
+      const bDate = b.application_deadline;
+      if (aDate && bDate) return aDate.localeCompare(bDate);
+      if (aDate && !bDate) return -1;
+      if (!aDate && bDate) return 1;
+      return 0;
+    })
+    .slice(0, 5);
 
   // Alerts
   const alerts: { text: string; href: string }[] = [];
@@ -249,9 +258,10 @@ export default async function DashboardPage() {
         />
         <BenchmarkStat
           label="ICU experience"
-          value={icuMonths > 0 ? `${icuMonths} mo` : "—"}
+          value={icuMonths > 0 ? formatIcuYears(icuMonths) : "—"}
           level={icuMonthsLevel(icuMonths)}
           benchmark={BENCHMARK_TARGETS.icu}
+          tooltip="Calculated from your hospital_units start and end dates. Roughly 1 year ≈ 2,080 hours full-time."
         />
         <BenchmarkStat
           label="Shadowing"
@@ -306,7 +316,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className={styles.pipelineRight}>
                       <StatusPill label={s.status} tone={tone} />
-                      {daysLeft !== null && daysLeft >= 0 && daysLeft <= 90 && (
+                      {daysLeft !== null && daysLeft >= 0 ? (
                         <div
                           className={styles.pipelineDeadline}
                           style={{
@@ -318,7 +328,18 @@ export default async function DashboardPage() {
                                 : "var(--taupe)",
                           }}
                         >
-                          Due in {daysLeft}d
+                          {daysLeft === 0 ? "Due today" : `Due in ${daysLeft}d`}
+                        </div>
+                      ) : daysLeft !== null && daysLeft < 0 ? (
+                        <div
+                          className={styles.pipelineDeadline}
+                          style={{ color: STATUS_TEXT_COLORS.danger }}
+                        >
+                          Past due
+                        </div>
+                      ) : (
+                        <div className={styles.pipelineDeadlineEmpty}>
+                          No deadline set
                         </div>
                       )}
                     </div>
@@ -352,17 +373,32 @@ export default async function DashboardPage() {
                     : c.status === "weak"
                     ? "Add detail"
                     : "Not entered";
-                const displayPercent = c.status === "missing" ? "—" : `${c.score}%`;
+                const displayPercent =
+                  c.status === "missing" ? "—" : `${c.score}%`;
+                const barColor = STATUS_TEXT_COLORS[tone];
                 return (
                   <div key={c.label} className={styles.categoryRow}>
-                    <span className={styles.categoryLabel}>{c.label}</span>
-                    <span className={styles.categoryPercent}>{displayPercent}</span>
-                    <span
-                      className={styles.categoryStatus}
-                      style={{ color: STATUS_TEXT_COLORS[tone] }}
-                    >
-                      {statusText}
-                    </span>
+                    <div className={styles.categoryRowTop}>
+                      <span className={styles.categoryLabel}>{c.label}</span>
+                      <span className={styles.categoryPercent}>
+                        {displayPercent}
+                      </span>
+                      <span
+                        className={styles.categoryStatus}
+                        style={{ color: barColor }}
+                      >
+                        {statusText}
+                      </span>
+                    </div>
+                    <div className={styles.categoryBar}>
+                      <div
+                        className={styles.categoryBarFill}
+                        style={{
+                          width: `${c.status === "missing" ? 0 : c.score}%`,
+                          background: barColor,
+                        }}
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -409,4 +445,15 @@ function calculateIcuMonths(units: HospitalUnit[]): number {
     if (months > 0) totalMonths += months;
   }
   return totalMonths;
+}
+
+function formatIcuYears(months: number): string {
+  const years = months / 12;
+  if (years < 1) {
+    return `${months} mo`;
+  }
+  if (years === Math.floor(years)) {
+    return `${years} yr${years === 1 ? "" : "s"}`;
+  }
+  return `${years.toFixed(1)} yrs`;
 }

@@ -95,5 +95,5 @@ export function getQuickActions(snapshot: ReadinessSnapshot, schoolsWithDeadline
     });
   }
 
-  return actions.slice(0, 3);
+  return actions.slice(0, 5);
 }

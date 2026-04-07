@@ -299,6 +299,15 @@
   letter-spacing: 0.06em;
 }
 
+.pipelineDeadlineEmpty {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--taupe-light);
+  font-style: italic;
+}
+
 .addBtn {
   font-family: var(--font-mono);
   font-size: 0.65rem;
@@ -337,16 +346,22 @@
 }
 
 .categoryRow {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 16px;
-  align-items: center;
-  padding: 11px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .categoryRow:last-child {
   border-bottom: none;
+}
+
+.categoryRowTop {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: center;
 }
 
 .categoryLabel {
@@ -368,6 +383,20 @@
   font-weight: 500;
 }
 
+.categoryBar {
+  width: 100%;
+  height: 4px;
+  background: var(--cream-dark);
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.categoryBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
 /* ── NEXT ACTIONS ── */
 .nextActions {
   background: var(--cream);
@@ -384,7 +413,7 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 14px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
 }
