@@ -18,7 +18,8 @@ export default function ExperienceClient({ units, userId }: Props) {
       table="hospital_units"
       userId={userId}
       items={units}
-      emptyMessage="No clinical experience added yet"
+      emptyTitle="Track your clinical experience."
+      emptyBody="Most CRNA programs require 1–3 years of critical care RN experience. Competitive applicants have 2+ years in a high-acuity ICU (Level 1/2 trauma, CVICU, MICU, SICU). Add each role with start and end dates — programs will count your months of experience as of their application deadline."
       defaultValues={{ hospital_name: "", unit_name: "", position: "", start_date: "", end_date: "", current: false, patient_population: "", key_experience: "" }}
       renderForm={(_, onChange, data) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

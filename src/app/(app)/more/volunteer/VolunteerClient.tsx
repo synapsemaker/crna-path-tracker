@@ -15,7 +15,8 @@ export default function VolunteerClient({ items, userId }: { items: VolunteerWor
       table="volunteer_work"
       userId={userId}
       items={items}
-      emptyMessage="No volunteer work added yet"
+      emptyTitle="Track your volunteer work."
+      emptyBody="Free clinics, medical missions, hospital committees, community health work — programs want to see service beyond your paid role. Add each commitment with hours so you can pull from this on applications."
       defaultValues={{ organization: "", role: "", start_date: "", end_date: "", hours: "", description: "", status: "Ongoing" }}
       renderForm={(_, onChange, d) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

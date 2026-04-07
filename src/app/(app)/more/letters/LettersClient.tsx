@@ -15,7 +15,8 @@ export default function LettersClient({ items, userId }: { items: LetterOfRec[];
       table="letters_of_rec"
       userId={userId}
       items={items}
-      emptyMessage="No letters of recommendation yet"
+      emptyTitle="Request your letters of recommendation."
+      emptyBody="Most CRNA programs require 3 letters — typically from a CRNA, your nurse manager or charge nurse, and a former professor. Ask early. Track who you've asked, when you requested it, when it's due, and whether it's been submitted."
       defaultValues={{ recommender_name: "", recommender_title: "", recommender_email: "", relationship: "", request_date: "", due_date: "", status: "Pending", school_name: "", notes: "" }}
       renderForm={(_, onChange, d) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

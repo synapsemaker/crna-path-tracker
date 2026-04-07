@@ -14,7 +14,8 @@ export default function PublicationsClient({ items, userId }: { items: Publicati
       table="publications"
       userId={userId}
       items={items}
-      emptyMessage="No publications yet"
+      emptyTitle="Track your publications."
+      emptyBody="Publications aren't required, but they make a competitive application stronger — especially DNP programs. If you've co-authored anything (poster, journal article, case study, even an internal hospital review), add it here with the APA citation."
       defaultValues={{ title: "", authors: "", journal_name: "", publication_year: "", doi: "", role: "", apa_citation: "" }}
       renderForm={(_, onChange, d) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

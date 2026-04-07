@@ -15,7 +15,8 @@ export default function ConferencesClient({ items, userId }: { items: Conference
       table="conferences"
       userId={userId}
       items={items}
-      emptyMessage="No conferences tracked yet"
+      emptyTitle="Track conferences and continuing ed."
+      emptyBody="AANA Annual Congress, state CRNA association meetings, ICU symposiums — these show programs you're invested in the profession beyond your job. Track what you've attended, what's coming up, and what you took away from each."
       defaultValues={{ name: "", organization: "", location: "", date: "", status: "Upcoming", key_takeaways: "", cost: "", notes: "" }}
       renderForm={(_, onChange, d) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

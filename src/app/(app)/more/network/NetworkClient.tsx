@@ -12,7 +12,8 @@ export default function NetworkClient({ items, userId }: { items: NetworkContact
       table="network"
       userId={userId}
       items={items}
-      emptyMessage="No contacts added yet"
+      emptyTitle="Build your CRNA network."
+      emptyBody="Track every CRNA, professor, program director, alumnus, and current student you connect with. These are your future recommenders, mentors, and the people who can answer questions you can't ask Google. Note when you met and when to follow up."
       defaultValues={{ name: "", profession: "", affiliation: "", email: "", meeting_date: "", follow_up_date: "", notes: "" }}
       renderForm={(_, onChange, d) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

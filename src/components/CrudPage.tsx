@@ -20,6 +20,8 @@ type Props<T extends { id: string }> = {
     formData: Record<string, unknown>
   ) => React.ReactNode;
   defaultValues: Record<string, unknown>;
+  emptyTitle?: string;
+  emptyBody?: string;
   emptyMessage?: string;
   topContent?: React.ReactNode;
 };
@@ -32,6 +34,8 @@ export default function CrudPage<T extends { id: string }>({
   renderCard,
   renderForm,
   defaultValues,
+  emptyTitle,
+  emptyBody,
   emptyMessage = "Nothing here yet",
   topContent,
 }: Props<T>) {
@@ -141,7 +145,15 @@ export default function CrudPage<T extends { id: string }>({
       )}
 
       {items.length === 0 && !adding ? (
-        <EmptyState message={emptyMessage} />
+        <EmptyState
+          title={emptyTitle ?? "Nothing here yet."}
+          body={emptyBody ?? emptyMessage}
+          action={
+            <button onClick={startAdd} className={styles.addBtn}>
+              + Add your first
+            </button>
+          }
+        />
       ) : (
         <div className={styles.list}>
           {items.map((item) => (

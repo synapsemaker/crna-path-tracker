@@ -1,23 +1,225 @@
 .title {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 400;
   font-style: italic;
   color: var(--ink);
   margin-bottom: 28px;
 }
 
+/* ── WELCOME ── */
+.welcomeBody {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--ink-mid);
+  line-height: 1.7;
+  max-width: 56ch;
+  margin-bottom: 24px;
+}
+
+.welcomeActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.primaryBtn {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: var(--ink);
+  padding: 12px 20px;
+  display: inline-block;
+  transition: background 0.15s;
+}
+
+.primaryBtn:hover {
+  background: var(--accent);
+}
+
+.secondaryBtn {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--warm-rule);
+  padding: 12px 20px;
+  display: inline-block;
+  transition: background 0.15s;
+}
+
+.secondaryBtn:hover {
+  background: var(--cream-deep);
+}
+
+/* ── ALERTS ── */
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fdf6e3;
+  border: 1px solid #e8d9a8;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+
+.alert:hover {
+  background: #f9eed0;
+}
+
+.alertDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b08d3a;
+  flex-shrink: 0;
+}
+
+.alertArrow {
+  margin-left: auto;
+  color: var(--taupe);
+  font-family: var(--font-mono);
+}
+
+/* ── READINESS + QUICK ACTIONS ── */
+.readinessRow {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.readinessCard {
+  border: 1px solid var(--warm-rule);
+  background: var(--cream);
+  padding: 24px;
+}
+
+.readinessLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-bottom: 12px;
+}
+
+.readinessScore {
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.readinessSub {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink-mid);
+  margin-bottom: 16px;
+}
+
+.readinessBar {
+  width: 100%;
+  height: 6px;
+  background: var(--cream-dark);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.readinessBarFill {
+  height: 100%;
+  background: var(--ink);
+  transition: width 0.4s ease;
+}
+
+.readinessGap {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--taupe);
+}
+
+.readinessGap strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.quickActions {
+  display: flex;
+  flex-direction: column;
+}
+
+.actionCard {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--warm-rule);
+  background: var(--cream);
+  margin-bottom: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.actionCard:hover {
+  background: var(--cream-deep);
+  border-color: var(--ink);
+}
+
+.actionLabel {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.actionDesc {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--taupe);
+}
+
+/* ── BENCHMARK STATS ── */
+.statsLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-bottom: 14px;
+}
+
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
   margin-bottom: 36px;
 }
 
+/* ── GRID ── */
 .grid {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  gap: 40px;
+  gap: 36px;
 }
 
 .sectionHeader {
@@ -29,7 +231,7 @@
 
 .sectionLabel {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -39,8 +241,7 @@
 .viewAll {
   font-family: var(--font-mono);
   font-size: 0.6rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: var(--taupe);
   transition: color 0.15s;
 }
@@ -52,10 +253,10 @@
 .empty {
   font-family: var(--font-body);
   font-size: 13px;
-  color: var(--taupe-light);
+  color: var(--taupe);
 }
 
-/* Deadlines */
+/* ── DEADLINES ── */
 .deadlineList {
   display: flex;
   flex-direction: column;
@@ -68,6 +269,11 @@
   gap: 12px;
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.deadlineRow:hover {
+  background: var(--cream-deep);
 }
 
 .deadlineRow:last-child {
@@ -77,98 +283,70 @@
 .deadlineName {
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 400;
   color: var(--ink);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
-.deadlineDate {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  color: var(--taupe);
-  white-space: nowrap;
-}
-
-/* Schools summary */
-.statusGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.statusItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.statusCount {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 400;
-  color: var(--ink);
-}
-
-/* GRE */
-.greRow {
-  display: flex;
-  gap: 24px;
-}
-
-.greItem {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.greValue {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--ink);
-}
-
-.greLabel {
+.deadlineMeta {
   font-family: var(--font-mono);
   font-size: 0.6rem;
-  font-weight: 400;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--taupe);
 }
 
-/* Quick actions */
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.actionBtn {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+.deadlineDays {
+  font-family: var(--font-display);
+  font-size: 18px;
   color: var(--ink);
-  border: 1px solid var(--warm-rule);
-  padding: 8px 14px;
-  transition: background 0.15s;
 }
 
-.actionBtn:hover {
-  background: var(--cream-deep);
+.deadlineUrgent {
+  color: #a05050;
+  font-weight: 500;
 }
 
-@media (max-width: 768px) {
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
+.deadlineWarn {
+  color: #b08d3a;
+}
+
+/* ── PIPELINE ── */
+.pipelineList {
+  display: flex;
+  flex-direction: column;
+}
+
+.pipelineRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.pipelineRow:last-child {
+  border-bottom: none;
+}
+
+.pipelineStatus {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink-mid);
+}
+
+.pipelineCount {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .readinessRow {
+    grid-template-columns: 1fr;
   }
 
   .grid {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 24px;
   }
 }

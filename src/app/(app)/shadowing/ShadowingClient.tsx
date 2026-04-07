@@ -19,7 +19,8 @@ export default function ShadowingClient({ entries, userId, totalHours }: Props) 
       table="shadowing_hours"
       userId={userId}
       items={entries}
-      emptyMessage="No shadowing hours logged yet"
+      emptyTitle="Log your shadowing hours."
+      emptyBody="Most CRNA programs want 8–40+ hours of shadowing a practicing CRNA. It proves you understand the role beyond what you've seen as a bedside RN. Log every shift here — date, facility, hours, what cases you observed."
       topContent={
         <div style={{ marginBottom: 24, maxWidth: 160 }}>
           <StatCard label="Total hours" value={totalHours} />

@@ -15,7 +15,8 @@ export default function EssaysClient({ items, userId }: { items: Essay[]; userId
       table="essays"
       userId={userId}
       items={items}
-      emptyMessage="No essays started yet"
+      emptyTitle="Draft your application essays."
+      emptyBody="Each program asks something different — usually a personal statement plus 1–3 supplemental prompts. Track every prompt, its word limit, and your draft. Move each one through Brainstorm → Drafting → Reviewing → Submitted so nothing slips before a deadline."
       defaultValues={{ school_name: "", prompt_text: "", word_limit: "", draft: "", status: "Brainstorm", deadline: "", key_points: "" }}
       renderForm={(_, onChange, d) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

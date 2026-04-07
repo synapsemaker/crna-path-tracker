@@ -19,7 +19,8 @@ export default function CertificationsClient({ certs, userId }: Props) {
       table="certifications"
       userId={userId}
       items={certs}
-      emptyMessage="No certifications added yet"
+      emptyTitle="Track your certifications."
+      emptyBody="CCRN is required by most CRNA programs. ACLS and BLS are baseline. PALS, TNCC, and other specialty certs strengthen your application. Add each one with its expiration date so you never let one lapse before applying."
       defaultValues={{ name: "CCRN", other_name: "", certification_number: "", issue_date: "", expiration_date: "", status: "In Progress" }}
       renderForm={(_, onChange, data) => (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
