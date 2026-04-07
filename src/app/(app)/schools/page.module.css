@@ -1,0 +1,65 @@
+.addBtn {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: var(--ink);
+  padding: 10px 18px;
+  display: inline-block;
+  transition: background 0.15s;
+}
+
+.addBtn:hover {
+  background: var(--accent);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card {
+  border: 1px solid var(--warm-rule);
+  background: var(--cream);
+  padding: 16px 20px;
+  transition: background 0.15s;
+  display: block;
+}
+
+.card:hover {
+  background: var(--cream-deep);
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardName {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.cardLocation {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--taupe);
+}
+
+.cardMeta {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-top: 10px;
+}

@@ -1,0 +1,23 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.divider {
+  border-top: 1px solid var(--border);
+  margin: 20px 0;
+}
+
+.error {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #a05050;
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

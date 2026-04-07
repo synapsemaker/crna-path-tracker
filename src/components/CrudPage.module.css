@@ -1,0 +1,115 @@
+.addBtn {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: var(--ink);
+  border: none;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.addBtn:hover {
+  background: var(--accent);
+}
+
+.form {
+  border: 1px solid var(--warm-rule);
+  background: var(--cream);
+  padding: 20px;
+  margin-bottom: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.cancelBtn {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  background: none;
+  border: 1px solid var(--warm-rule);
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+.saveBtn {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: var(--ink);
+  border: none;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.saveBtn:hover {
+  background: var(--accent);
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.editBtn {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.editBtn:hover {
+  color: var(--ink);
+}
+
+.deleteBtn {
+  font-size: 16px;
+  color: #a05050;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.deleteBtn:hover {
+  color: #803030;
+}
