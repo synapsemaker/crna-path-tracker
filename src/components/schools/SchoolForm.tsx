@@ -41,7 +41,7 @@ export default function SchoolForm({ school, userId }: Props) {
   const [tuition, setTuition] = useState(school?.tuition?.toString() ?? "");
   const [website, setWebsite] = useState(school?.website ?? "");
   const [notes, setNotes] = useState(school?.notes ?? "");
-  const [status, setStatus] = useState(school?.status ?? "Researching");
+  const [status, setStatus] = useState<string>(school?.status ?? "Researching");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -69,9 +69,8 @@ export default function CrudPage<T extends { id: string }>({
     e.preventDefault();
     setSaving(true);
 
-    const data = { ...formData, user_id: userId };
-    delete data.id;
-    delete data.created_at;
+    const { id: _id, created_at: _ca, ...rest } = formData;
+    const data = { ...rest, user_id: userId };
 
     if (editingId) {
       const { data: updated } = await supabase
