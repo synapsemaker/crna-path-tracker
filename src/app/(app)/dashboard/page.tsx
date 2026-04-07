@@ -6,13 +6,18 @@ import {
   scienceGpaLevel,
   shadowingLevel,
   icuMonthsLevel,
-  greVerbalLevel,
-  greQuantLevel,
   BENCHMARK_TARGETS,
 } from "@/lib/benchmarks";
 import { calculateGPA, calculateScienceGPA } from "@/lib/gpa";
+import {
+  schoolStatusTone,
+  componentTone,
+  STATUS_TEXT_COLORS,
+} from "@/lib/statusColors";
 import Link from "next/link";
 import BenchmarkStat from "@/components/ui/BenchmarkStat";
+import SchoolAvatar from "@/components/ui/SchoolAvatar";
+import StatusPill from "@/components/ui/StatusPill";
 import styles from "./page.module.css";
 import type {
   Course,
@@ -86,24 +91,33 @@ export default async function DashboardPage() {
   const totalShadowing = shadowing.reduce((sum, s) => sum + (s.hours ?? 0), 0);
   const icuMonths = calculateIcuMonths(hospitalUnits);
 
-  // Upcoming deadlines (next 60 days)
-  const upcomingDeadlines = schools
-    .filter(
-      (s) =>
-        s.application_deadline &&
-        s.application_deadline >= todayStr &&
-        s.application_deadline <= sixtyDaysOut
-    )
-    .sort((a, b) =>
-      (a.application_deadline ?? "").localeCompare(b.application_deadline ?? "")
-    )
-    .slice(0, 5);
+  // Build a one-line readiness summary from the strongest + weakest signals
+  const summaryParts: string[] = [];
+  const sortedStrong = snapshot.components
+    .filter((c) => c.status === "strong")
+    .slice(0, 1);
+  const gaps = snapshot.components.filter(
+    (c) => c.status === "missing" || c.status === "weak"
+  );
+  if (sortedStrong.length > 0) {
+    summaryParts.push(`Strong ${sortedStrong[0].label.toLowerCase()}`);
+  }
+  for (const gap of gaps.slice(0, 3)) {
+    if (gap.status === "missing") {
+      summaryParts.push(`${gap.label} missing`);
+    } else {
+      summaryParts.push(`${gap.label.toLowerCase()} gap`);
+    }
+  }
+  const summarySentence = summaryParts.join(" · ");
+
+  // Top 3 schools for pipeline display
+  const pipelineSchools = schools.slice(0, 5);
 
   // Alerts
   const alerts: { text: string; href: string }[] = [];
   const overdueLetters = letters.filter(
-    (l) =>
-      l.status !== "Received" && l.due_date && l.due_date < todayStr
+    (l) => l.status !== "Received" && l.due_date && l.due_date < todayStr
   );
   if (overdueLetters.length > 0) {
     alerts.push({
@@ -138,12 +152,6 @@ export default async function DashboardPage() {
 
   const quickActions = getQuickActions(snapshot, schoolsWithUpcoming.length);
 
-  // Pipeline counts
-  const pipelineCounts: Record<string, number> = {};
-  for (const s of schools) {
-    pipelineCounts[s.status] = (pipelineCounts[s.status] ?? 0) + 1;
-  }
-
   // Brand new user — minimal welcome
   if (isEmpty) {
     return (
@@ -168,7 +176,16 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className={styles.title}>Dashboard</h1>
+      <div className={styles.titleRow}>
+        <h1 className={styles.title}>Dashboard</h1>
+        <span className={styles.dateLabel}>
+          {today.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </span>
+      </div>
 
       {/* Alerts */}
       {alerts.length > 0 && (
@@ -183,46 +200,24 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Readiness + Quick actions */}
-      <div className={styles.readinessRow}>
-        <div className={styles.readinessCard}>
+      {/* Readiness — full width with soft tint */}
+      <div className={styles.readinessCard}>
+        <div className={styles.readinessLeft}>
+          <div className={styles.readinessScore}>{snapshot.score}%</div>
+        </div>
+        <div className={styles.readinessRight}>
           <div className={styles.readinessLabel}>Application readiness</div>
-          <div className={styles.readinessScore}>{snapshot.score}</div>
-          <div className={styles.readinessSub}>
-            {snapshot.score >= 80
-              ? "Strong — you're ready to apply"
-              : snapshot.score >= 60
-              ? "On track — keep building"
-              : snapshot.score >= 40
-              ? "Coming together — focus on gaps"
-              : "Getting started — add the basics"}
-          </div>
           <div className={styles.readinessBar}>
             <div
               className={styles.readinessBarFill}
               style={{ width: `${snapshot.score}%` }}
             />
           </div>
-          {snapshot.primaryGap && (
-            <div className={styles.readinessGap}>
-              Biggest gap: <strong>{snapshot.primaryGap}</strong>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.quickActions}>
-          <div className={styles.sectionLabel}>Next steps</div>
-          {quickActions.map((a, i) => (
-            <Link key={i} href={a.href} className={styles.actionCard}>
-              <div className={styles.actionLabel}>{a.label}</div>
-              <div className={styles.actionDesc}>{a.description}</div>
-            </Link>
-          ))}
+          <div className={styles.readinessSummary}>{summarySentence}</div>
         </div>
       </div>
 
-      {/* Benchmark stats */}
-      <div className={styles.statsLabel}>Profile</div>
+      {/* 4 stat cards */}
       <div className={styles.stats}>
         <BenchmarkStat
           label="Overall GPA"
@@ -248,107 +243,129 @@ export default async function DashboardPage() {
           level={shadowingLevel(totalShadowing)}
           benchmark={BENCHMARK_TARGETS.shadowing}
         />
-        {academic?.gre_verbal && (
-          <BenchmarkStat
-            label="GRE Verbal"
-            value={academic.gre_verbal}
-            level={greVerbalLevel(academic.gre_verbal)}
-            benchmark={BENCHMARK_TARGETS.greVerbal}
-          />
-        )}
-        {academic?.gre_quantitative && (
-          <BenchmarkStat
-            label="GRE Quant"
-            value={academic.gre_quantitative}
-            level={greQuantLevel(academic.gre_quantitative)}
-            benchmark={BENCHMARK_TARGETS.greQuant}
-          />
-        )}
       </div>
 
-      {/* Two columns: Deadlines + Pipeline */}
+      {/* Two columns: School pipeline + Category progress */}
       <div className={styles.grid}>
-        <div>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>
-              Upcoming deadlines (60 days)
-            </span>
+        {/* School pipeline */}
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>School pipeline</span>
             <Link href="/schools" className={styles.viewAll}>
-              All schools →
+              View all →
             </Link>
           </div>
-          {upcomingDeadlines.length === 0 ? (
-            <p className={styles.empty}>
-              {schools.length === 0
-                ? "Add a school to track deadlines"
-                : "No deadlines in the next 60 days"}
-            </p>
+          {pipelineSchools.length === 0 ? (
+            <div className={styles.panelEmpty}>
+              <p>No schools added yet</p>
+              <Link href="/schools/new" className={styles.addBtn}>
+                + Add school
+              </Link>
+            </div>
           ) : (
-            <div className={styles.deadlineList}>
-              {upcomingDeadlines.map((s) => {
-                const daysLeft = Math.round(
-                  (new Date(s.application_deadline + "T00:00:00").getTime() -
-                    today.getTime()) /
-                    86400000
-                );
+            <div className={styles.pipelineList}>
+              {pipelineSchools.map((s) => {
+                const tone = schoolStatusTone(s.status);
+                const daysLeft = s.application_deadline
+                  ? Math.round(
+                      (new Date(
+                        s.application_deadline + "T00:00:00"
+                      ).getTime() -
+                        today.getTime()) /
+                        86400000
+                    )
+                  : null;
                 return (
                   <Link
                     key={s.id}
                     href={`/schools/${s.id}`}
-                    className={styles.deadlineRow}
+                    className={styles.pipelineRow}
                   >
-                    <div>
-                      <div className={styles.deadlineName}>{s.name}</div>
-                      <div className={styles.deadlineMeta}>{s.status}</div>
+                    <SchoolAvatar name={s.name} size={40} />
+                    <div className={styles.pipelineInfo}>
+                      <div className={styles.pipelineName}>{s.name}</div>
+                      {s.location && (
+                        <div className={styles.pipelineLoc}>{s.location}</div>
+                      )}
                     </div>
-                    <div className={styles.deadlineDays}>
-                      <span
-                        className={
-                          daysLeft <= 14
-                            ? styles.deadlineUrgent
-                            : daysLeft <= 30
-                            ? styles.deadlineWarn
-                            : ""
-                        }
-                      >
-                        {daysLeft}d
-                      </span>
+                    <div className={styles.pipelineRight}>
+                      <StatusPill label={s.status} tone={tone} />
+                      {daysLeft !== null && daysLeft >= 0 && daysLeft <= 90 && (
+                        <div
+                          className={styles.pipelineDeadline}
+                          style={{
+                            color:
+                              daysLeft <= 14
+                                ? STATUS_TEXT_COLORS.danger
+                                : daysLeft <= 30
+                                ? STATUS_TEXT_COLORS.warn
+                                : "var(--taupe)",
+                          }}
+                        >
+                          Due in {daysLeft}d
+                        </div>
+                      )}
                     </div>
                   </Link>
                 );
               })}
+              <Link href="/schools/new" className={styles.addBtnGhost}>
+                + Add school
+              </Link>
             </div>
           )}
         </div>
 
-        <div>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Pipeline</span>
+        {/* Category progress */}
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Category progress</span>
           </div>
-          {schools.length === 0 ? (
-            <p className={styles.empty}>No schools added yet</p>
-          ) : (
-            <div className={styles.pipelineList}>
-              {[
-                "Researching",
-                "Planning to Apply",
-                "Applied",
-                "Interviewed",
-                "Accepted",
-                "Waitlisted",
-                "Declined",
-              ]
-                .filter((status) => pipelineCounts[status])
-                .map((status) => (
-                  <div key={status} className={styles.pipelineRow}>
-                    <span className={styles.pipelineStatus}>{status}</span>
-                    <span className={styles.pipelineCount}>
-                      {pipelineCounts[status]}
+          <div className={styles.categoryList}>
+            {snapshot.components
+              .filter((c) => c.weight >= 0.05)
+              .map((c) => {
+                const tone = componentTone(c.status);
+                const statusText =
+                  c.status === "strong"
+                    ? "Strong"
+                    : c.status === "ok"
+                    ? "On track"
+                    : c.status === "weak"
+                    ? "Add detail"
+                    : "Missing";
+                return (
+                  <div key={c.label} className={styles.categoryRow}>
+                    <span className={styles.categoryLabel}>{c.label}</span>
+                    <span className={styles.categoryPercent}>{c.score}%</span>
+                    <span
+                      className={styles.categoryStatus}
+                      style={{ color: STATUS_TEXT_COLORS[tone] }}
+                    >
+                      {statusText}
                     </span>
                   </div>
-                ))}
-            </div>
-          )}
+                );
+              })}
+          </div>
+        </div>
+      </div>
+
+      {/* Next actions */}
+      <div className={styles.nextActions}>
+        <div className={styles.panelHeader}>
+          <span className={styles.panelTitle}>Next actions</span>
+        </div>
+        <div className={styles.actionList}>
+          {quickActions.map((a, i) => (
+            <Link key={i} href={a.href} className={styles.actionCard}>
+              <span className={styles.actionDot} />
+              <div>
+                <div className={styles.actionLabel}>{a.label}</div>
+                <div className={styles.actionDesc}>{a.description}</div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
