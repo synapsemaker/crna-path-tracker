@@ -34,10 +34,12 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthPage =
     request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/signup";
+    request.nextUrl.pathname === "/signup" ||
+    request.nextUrl.pathname === "/forgot";
   const isAuthCallback = request.nextUrl.pathname.startsWith("/auth/");
+  const isReset = request.nextUrl.pathname === "/reset";
 
-  if (!user && !isAuthPage && !isAuthCallback) {
+  if (!user && !isAuthPage && !isAuthCallback && !isReset) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
