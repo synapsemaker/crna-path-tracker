@@ -5,7 +5,8 @@ import type { Course, Certification, ShadowingHour, HospitalUnit, AcademicProfil
 import { calculateGPA, calculateScienceGPA } from "./gpa";
 
 export type ReadinessSnapshot = {
-  score: number; // 0-100
+  score: number; // 0-100, calculated only on completed sections
+  completeness: number; // 0-100, how much of the profile is filled in
   components: ReadinessComponent[];
   primaryGap: string | null;
 };
@@ -217,19 +218,32 @@ export function calculateReadiness(inputs: Inputs): ReadinessSnapshot {
     detail: `${essaysSubmitted} submitted · ${inputs.essays.length - essaysSubmitted} drafting`,
   });
 
-  // Composite score
+  // Score only counts components the user has actually entered data for.
+  // "missing" components don't penalize the score — they reduce completeness.
+  const filled = components.filter((c) => c.status !== "missing");
+  const filledWeight = filled.reduce((sum, c) => sum + c.weight, 0);
+  const score =
+    filled.length === 0
+      ? 0
+      : Math.round(
+          filled.reduce((sum, c) => sum + c.score * c.weight, 0) / filledWeight
+        );
+
+  // Completeness: what fraction of the profile (by weight) is filled in
   const totalWeight = components.reduce((sum, c) => sum + c.weight, 0);
-  const score = Math.round(
-    components.reduce((sum, c) => sum + c.score * c.weight, 0) / totalWeight
-  );
+  const completeness = Math.round((filledWeight / totalWeight) * 100);
 
-  // Find primary gap (worst-scoring component above weight threshold)
-  const sortedByImpact = [...components]
-    .filter((c) => c.status === "missing" || c.status === "weak")
+  // Find primary gap — prefer missing components first (they reduce completeness),
+  // then weak components (they hurt the score)
+  const missing = components
+    .filter((c) => c.status === "missing")
+    .sort((a, b) => b.weight - a.weight);
+  const weak = components
+    .filter((c) => c.status === "weak")
     .sort((a, b) => b.weight - a.weight || a.score - b.score);
-  const primaryGap = sortedByImpact[0]?.label ?? null;
+  const primaryGap = (missing[0] ?? weak[0])?.label ?? null;
 
-  return { score, components, primaryGap };
+  return { score, completeness, components, primaryGap };
 }
 
 function calculateIcuMonths(units: HospitalUnit[]): number {

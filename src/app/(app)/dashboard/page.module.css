@@ -171,6 +171,16 @@
   line-height: 1.5;
 }
 
+.readinessCompleteness {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-top: 8px;
+}
+
 /* ── STATS ── */
 .stats {
   display: grid;

@@ -91,31 +91,44 @@ export default async function DashboardPage() {
   const totalShadowing = shadowing.reduce((sum, s) => sum + (s.hours ?? 0), 0);
   const icuMonths = calculateIcuMonths(hospitalUnits);
 
-  // Build a one-line readiness summary from the strongest + weakest signals
-  const summaryParts: string[] = [];
-  const sortedStrong = snapshot.components
-    .filter((c) => c.status === "strong")
-    .slice(0, 1);
-  const gaps = snapshot.components.filter(
-    (c) => c.status === "missing" || c.status === "weak"
-  );
-  if (sortedStrong.length > 0) {
-    summaryParts.push(`Strong ${sortedStrong[0].label.toLowerCase()}`);
-  }
-  for (const gap of gaps.slice(0, 3)) {
-    if (gap.status === "missing") {
-      summaryParts.push(`${gap.label} missing`);
-    } else {
-      summaryParts.push(`${gap.label.toLowerCase()} gap`);
+  // Build a readiness summary that adapts to profile completeness
+  const missingCount = snapshot.components.filter((c) => c.status === "missing").length;
+  const strongComponents = snapshot.components.filter((c) => c.status === "strong");
+  const weakComponents = snapshot.components.filter((c) => c.status === "weak");
+
+  let summarySentence: string;
+  if (snapshot.completeness < 40) {
+    summarySentence =
+      "Score reflects what you've entered. Complete your profile for an accurate picture.";
+  } else if (snapshot.completeness < 70) {
+    const strongLabels = strongComponents.slice(0, 2).map((c) => c.label.toLowerCase());
+    const strongPart =
+      strongLabels.length > 0 ? `Strong ${strongLabels.join(", ")}` : "";
+    const morePart = `Add ${missingCount} more section${missingCount === 1 ? "" : "s"} for full accuracy`;
+    summarySentence = strongPart ? `${strongPart} · ${morePart}` : morePart;
+  } else {
+    const parts: string[] = [];
+    if (strongComponents.length > 0) {
+      parts.push(`Strong ${strongComponents[0].label.toLowerCase()}`);
     }
+    for (const gap of weakComponents.slice(0, 3)) {
+      parts.push(`${gap.label.toLowerCase()} gap`);
+    }
+    summarySentence = parts.join(" · ");
   }
-  const summarySentence = summaryParts.join(" · ");
 
   // Top 3 schools for pipeline display
   const pipelineSchools = schools.slice(0, 5);
 
   // Alerts
   const alerts: { text: string; href: string }[] = [];
+  // Profile completeness alert (highest priority)
+  if (snapshot.completeness < 40) {
+    alerts.push({
+      text: `Your profile is ${snapshot.completeness}% complete — add more sections for an accurate score`,
+      href: "/academic",
+    });
+  }
   const overdueLetters = letters.filter(
     (l) => l.status !== "Received" && l.due_date && l.due_date < todayStr
   );
@@ -214,6 +227,9 @@ export default async function DashboardPage() {
             />
           </div>
           <div className={styles.readinessSummary}>{summarySentence}</div>
+          <div className={styles.readinessCompleteness}>
+            Based on {snapshot.completeness}% of your profile
+          </div>
         </div>
       </div>
 
@@ -325,7 +341,9 @@ export default async function DashboardPage() {
             {snapshot.components
               .filter((c) => c.weight >= 0.05)
               .map((c) => {
-                const tone = componentTone(c.status);
+                // Missing components are neutral (not red) — they're just unentered
+                const tone =
+                  c.status === "missing" ? "neutral" : componentTone(c.status);
                 const statusText =
                   c.status === "strong"
                     ? "Strong"
@@ -333,11 +351,12 @@ export default async function DashboardPage() {
                     ? "On track"
                     : c.status === "weak"
                     ? "Add detail"
-                    : "Missing";
+                    : "Not entered";
+                const displayPercent = c.status === "missing" ? "—" : `${c.score}%`;
                 return (
                   <div key={c.label} className={styles.categoryRow}>
                     <span className={styles.categoryLabel}>{c.label}</span>
-                    <span className={styles.categoryPercent}>{c.score}%</span>
+                    <span className={styles.categoryPercent}>{displayPercent}</span>
                     <span
                       className={styles.categoryStatus}
                       style={{ color: STATUS_TEXT_COLORS[tone] }}
