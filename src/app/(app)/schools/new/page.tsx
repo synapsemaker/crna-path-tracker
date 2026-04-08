@@ -1,32 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/ui/PageHeader";
 import SchoolForm from "@/components/schools/SchoolForm";
+import {
+  getCatalogProgramBySlug,
+  catalogProgramToSchoolPrefill,
+} from "@/lib/catalog";
 import type { School } from "@/lib/types";
 
 type Props = {
-  searchParams: Promise<{ prefill?: string }>;
+  searchParams: Promise<{ program?: string }>;
 };
 
 export default async function NewSchoolPage({ searchParams }: Props) {
-  const { prefill } = await searchParams;
+  const { program: programSlug } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Decode the optional ?prefill=<base64url-json> payload sent by the
-  // Meridian Finder. Invalid or malformed payloads are silently ignored —
-  // the form just renders empty.
+  // If a program slug was passed (from Meridian's "+ Tracker" button),
+  // fetch the canonical program from the End Tidal catalog and use it
+  // to prefill the form. Unknown / removed slugs render an empty form.
   let prefilledData: Partial<School> | undefined;
-  if (prefill) {
-    try {
-      const decoded = Buffer.from(prefill, "base64url").toString("utf-8");
-      const parsed = JSON.parse(decoded);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        prefilledData = parsed as Partial<School>;
-      }
-    } catch {
-      // ignore — render an empty form
+  if (programSlug) {
+    const catalogProgram = await getCatalogProgramBySlug(programSlug);
+    if (catalogProgram) {
+      prefilledData = catalogProgramToSchoolPrefill(catalogProgram);
     }
   }
 
