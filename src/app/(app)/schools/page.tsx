@@ -76,7 +76,7 @@ export default async function SchoolsPage() {
                       href={`/schools/${s.id}`}
                       className={styles.card}
                     >
-                      <div className={styles.cardName}>{s.name}</div>
+                      <div className={styles.cardName}>{s.program_name}</div>
                       {s.location && (
                         <div className={styles.cardLocation}>{s.location}</div>
                       )}

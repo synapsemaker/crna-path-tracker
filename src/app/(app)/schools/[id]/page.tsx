@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { School, Course, Certification, AcademicProfile, HospitalUnit, LetterOfRec, Essay } from "@/lib/types";
+import type { School, Course, Certification, AcademicProfile, HospitalUnit, LetterOfRec, Essay, ShadowingHour } from "@/lib/types";
 import PageHeader from "@/components/ui/PageHeader";
 import SchoolForm from "@/components/schools/SchoolForm";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -31,7 +31,7 @@ export default function SchoolDetailPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setUserId(user.id);
 
-      const [schoolRes, coursesRes, certsRes, profileRes, unitsRes, lettersRes, essaysRes] =
+      const [schoolRes, coursesRes, certsRes, profileRes, unitsRes, lettersRes, essaysRes, shadowingRes] =
         await Promise.all([
           supabase.from("schools").select("*").eq("id", params.id).single(),
           supabase.from("courses").select("*"),
@@ -40,6 +40,7 @@ export default function SchoolDetailPage() {
           supabase.from("hospital_units").select("*"),
           supabase.from("letters_of_rec").select("*"),
           supabase.from("essays").select("*"),
+          supabase.from("shadowing_hours").select("*"),
         ]);
 
       const s: School | null = schoolRes.data;
@@ -52,15 +53,16 @@ export default function SchoolDetailPage() {
       const units: HospitalUnit[] = unitsRes.data ?? [];
       const letters: LetterOfRec[] = lettersRes.data ?? [];
       const essays: Essay[] = essaysRes.data ?? [];
+      const shadowing: ShadowingHour[] = shadowingRes.data ?? [];
 
       const userGpa = calculateGPA(courses);
       const icuMonths = calculateIcuMonths(units);
       const ccrn = certs.find((c) => c.name === "CCRN");
       const lettersForSchool = letters.filter(
-        (l) => l.school_name && s.name && l.school_name.toLowerCase().includes(s.name.toLowerCase().split(" ")[0])
+        (l) => l.school_name && s.program_name && l.school_name.toLowerCase().includes(s.program_name.toLowerCase().split(" ")[0])
       );
       const essaysForSchool = essays.filter(
-        (e) => e.school_name && s.name && e.school_name.toLowerCase().includes(s.name.toLowerCase().split(" ")[0])
+        (e) => e.school_name && s.program_name && e.school_name.toLowerCase().includes(s.program_name.toLowerCase().split(" ")[0])
       );
 
       const newChecks: Check[] = [];
@@ -75,34 +77,57 @@ export default function SchoolDetailPage() {
         });
       }
 
-      // GRE Verbal
-      if (s.min_gre_verbal !== null) {
-        const verbal = profile?.gre_verbal ?? null;
+      // GRE — only if the program actually requires it
+      if (s.requires_gre) {
+        if (s.min_gre_verbal !== null) {
+          const verbal = profile?.gre_verbal ?? null;
+          newChecks.push({
+            label: `GRE Verbal ≥ ${s.min_gre_verbal}`,
+            met: verbal === null ? null : verbal >= s.min_gre_verbal,
+            detail: verbal === null ? "Not entered" : `Your score: ${verbal}`,
+          });
+        }
+        if (s.min_gre_quantitative !== null) {
+          const quant = profile?.gre_quantitative ?? null;
+          newChecks.push({
+            label: `GRE Quant ≥ ${s.min_gre_quantitative}`,
+            met: quant === null ? null : quant >= s.min_gre_quantitative,
+            detail: quant === null ? "Not entered" : `Your score: ${quant}`,
+          });
+        }
+        if (s.min_gre_verbal === null && s.min_gre_quantitative === null) {
+          const profileEntered = profile && (profile.gre_verbal || profile.gre_quantitative);
+          newChecks.push({
+            label: "GRE required",
+            met: profileEntered ? true : null,
+            detail: profileEntered ? "Score entered" : "Add GRE scores in Academic",
+          });
+        }
+      }
+
+      // ICU experience (years) — programs report this in years, we track months
+      if (s.icu_years_required !== null) {
+        const userYears = icuMonths / 12;
         newChecks.push({
-          label: `GRE Verbal ≥ ${s.min_gre_verbal}`,
-          met: verbal === null ? null : verbal >= s.min_gre_verbal,
-          detail: verbal === null ? "Not entered" : `Your score: ${verbal}`,
+          label: `${s.icu_years_required} ICU year${s.icu_years_required === 1 ? "" : "s"}`,
+          met: userYears >= s.icu_years_required,
+          detail:
+            icuMonths === 0
+              ? "No experience added"
+              : `${userYears.toFixed(1)} years (${icuMonths} months)`,
         });
       }
 
-      // GRE Quant
-      if (s.min_gre_quantitative !== null) {
-        const quant = profile?.gre_quantitative ?? null;
+      // Shadowing
+      if (s.min_shadowing_hours !== null) {
+        const totalShadowingHours = shadowing.reduce((sum, sh) => sum + (sh.hours ?? 0), 0);
         newChecks.push({
-          label: `GRE Quant ≥ ${s.min_gre_quantitative}`,
-          met: quant === null ? null : quant >= s.min_gre_quantitative,
-          detail: quant === null ? "Not entered" : `Your score: ${quant}`,
-        });
-      }
-
-      // ICU hours (using months as proxy — most schools state hours but we track months)
-      if (s.min_icu_hours !== null) {
-        // Rough conversion: 1 month FT ≈ 160 hours
-        const userHours = icuMonths * 160;
-        newChecks.push({
-          label: `${s.min_icu_hours} ICU hours`,
-          met: userHours >= s.min_icu_hours,
-          detail: icuMonths === 0 ? "No experience added" : `~${userHours} hours (${icuMonths} months)`,
+          label: `${s.min_shadowing_hours} shadowing hours`,
+          met: totalShadowingHours >= s.min_shadowing_hours,
+          detail:
+            totalShadowingHours === 0
+              ? "No shadowing logged"
+              : `${totalShadowingHours} hours logged`,
         });
       }
 
@@ -156,11 +181,15 @@ export default function SchoolDetailPage() {
   }
 
   const fields = [
-    { label: "Program", value: school.program_name },
     { label: "Location", value: school.location },
     { label: "Degree", value: school.degree_type },
     { label: "Length", value: school.program_length },
-    { label: "Deadline", value: school.application_deadline },
+    {
+      label: "Deadline",
+      value: school.rolling_admissions
+        ? "Rolling admissions"
+        : school.application_deadline,
+    },
     { label: "Interview", value: school.interview_date },
     { label: "Decision", value: school.decision_date },
     { label: "Deposit due", value: school.deposit_due },
@@ -175,7 +204,7 @@ export default function SchoolDetailPage() {
   return (
     <div>
       <PageHeader
-        title={school.name}
+        title={school.program_name}
         action={
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setEditing(true)} className={styles.addBtn}>

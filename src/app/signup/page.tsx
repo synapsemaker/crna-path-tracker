@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import styles from "../login/page.module.css";
@@ -11,13 +11,34 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [loginHref, setLoginHref] = useState("/login");
   const supabase = createClient();
+
+  // Preserve `?next=` so the signup → login link round-trip retains the
+  // post-auth destination (e.g. a Finder prefill URL).
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next) setLoginHref(`/login?next=${encodeURIComponent(next)}`);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signUp({ email, password });
+
+    // Build a same-origin redirect target for the email confirmation link.
+    // Supabase invokes /auth/callback?next=<value> when the user clicks
+    // through; the callback route will redirect there after exchanging the
+    // code for a session.
+    const next = new URLSearchParams(window.location.search).get("next");
+    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo },
+    });
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -87,7 +108,7 @@ export default function SignupPage() {
           </form>
         )}
         <p className={styles.switch}>
-          Already have an account? <Link href="/login">Sign in</Link>
+          Already have an account? <Link href={loginHref}>Sign in</Link>
         </p>
       </div>
     </div>

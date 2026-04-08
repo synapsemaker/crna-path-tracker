@@ -16,6 +16,18 @@
   margin-top: 12px;
 }
 
+.prefillBanner {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  background: rgba(160, 130, 80, 0.08);
+  border: 1px solid var(--warm-rule);
+  padding: 10px 16px;
+  margin-bottom: 20px;
+}
+
 @media (max-width: 768px) {
   .grid {
     grid-template-columns: 1fr;

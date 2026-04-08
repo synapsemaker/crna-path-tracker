@@ -42,12 +42,22 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isAuthPage && !isAuthCallback && !isReset) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    // Preserve the original destination (path + query) so the user lands there
+    // after sign-in. This is what makes the Finder → Tracker handoff work for
+    // unauthenticated users — the prefill query string survives the auth detour.
+    url.search = "";
+    url.searchParams.set(
+      "next",
+      request.nextUrl.pathname + request.nextUrl.search
+    );
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    const next = request.nextUrl.searchParams.get("next");
+    url.pathname = next && next.startsWith("/") ? next.split("?")[0] : "/";
+    url.search = next && next.includes("?") ? next.slice(next.indexOf("?")) : "";
     return NextResponse.redirect(url);
   }
 

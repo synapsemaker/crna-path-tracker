@@ -25,8 +25,7 @@ export type Course = {
 export type School = {
   id: string;
   user_id: string;
-  name: string;
-  program_name: string | null;
+  program_name: string;
   location: string | null;
   degree_type: string | null;
   program_length: string | null;
@@ -38,8 +37,12 @@ export type School = {
   min_gpa: number | null;
   min_gre_verbal: number | null;
   min_gre_quantitative: number | null;
-  min_icu_hours: number | null;
+  icu_years_required: number | null;
   requires_ccrn: boolean;
+  requires_gre: boolean;
+  min_shadowing_hours: number | null;
+  rolling_admissions: boolean;
+  source_program_id: string | null;
   tuition: number | null;
   website: string | null;
   notes: string | null;

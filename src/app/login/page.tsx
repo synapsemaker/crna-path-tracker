@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -11,8 +11,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signupHref, setSignupHref] = useState("/signup");
   const router = useRouter();
   const supabase = createClient();
+
+  // Carry the ?next= query through to signup so unauthenticated users sent
+  // by the Meridian Finder can sign up and still land on the prefilled form.
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next) setSignupHref(`/signup?next=${encodeURIComponent(next)}`);
+  }, []);
+
+  // Read the destination from `?next=` and only allow same-origin paths.
+  // Anything that doesn't start with "/" (or starts with "//" — protocol-relative)
+  // is rejected to avoid open-redirect vulns.
+  function getSafeNext(): string {
+    if (typeof window === "undefined") return "/";
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (!next) return "/";
+    if (!next.startsWith("/") || next.startsWith("//")) return "/";
+    return next;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,7 +46,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    router.push("/");
+    router.push(getSafeNext());
     router.refresh();
   }
 
@@ -66,7 +85,7 @@ export default function LoginPage() {
           <Link href="/forgot">Forgot password?</Link>
         </p>
         <p className={styles.switch}>
-          No account? <Link href="/signup">Create one</Link>
+          No account? <Link href={signupHref}>Create one</Link>
         </p>
       </div>
     </div>

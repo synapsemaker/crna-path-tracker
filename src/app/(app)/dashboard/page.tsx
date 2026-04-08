@@ -307,16 +307,23 @@ export default async function DashboardPage() {
                     href={`/schools/${s.id}`}
                     className={styles.pipelineRow}
                   >
-                    <SchoolAvatar name={s.name} size={40} />
+                    <SchoolAvatar name={s.program_name} size={40} />
                     <div className={styles.pipelineInfo}>
-                      <div className={styles.pipelineName}>{s.name}</div>
+                      <div className={styles.pipelineName}>{s.program_name}</div>
                       {s.location && (
                         <div className={styles.pipelineLoc}>{s.location}</div>
                       )}
                     </div>
                     <div className={styles.pipelineRight}>
                       <StatusPill label={s.status} tone={tone} />
-                      {daysLeft !== null && daysLeft >= 0 ? (
+                      {s.rolling_admissions ? (
+                        <div
+                          className={styles.pipelineDeadline}
+                          style={{ color: "var(--taupe)" }}
+                        >
+                          Rolling
+                        </div>
+                      ) : daysLeft !== null && daysLeft >= 0 ? (
                         <div
                           className={styles.pipelineDeadline}
                           style={{
