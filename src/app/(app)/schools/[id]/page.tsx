@@ -5,7 +5,11 @@ import { useRouter, useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { School, Course, Certification, AcademicProfile, HospitalUnit, LetterOfRec, Essay, ShadowingHour } from "@/lib/types";
 import { fetchCatalogProgramById } from "@/lib/catalog-actions";
-import { evaluateRequirementGroup, type CatalogProgram } from "@/lib/catalog";
+import {
+  evaluateRequirementGroup,
+  evaluateCriticalCare,
+  type CatalogProgram,
+} from "@/lib/catalog";
 import PageHeader from "@/components/ui/PageHeader";
 import SchoolForm from "@/components/schools/SchoolForm";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -80,7 +84,7 @@ export default function SchoolDetailPage() {
         }
       }
 
-      // Build user-data inputs for requirement group evaluation
+      // Build user-data inputs for requirement group evaluation (prereqs + certs only)
       const userDataForGroups = {
         completedCourses: new Set<string>(
           courses
@@ -92,8 +96,6 @@ export default function SchoolDetailPage() {
             .filter((c) => c.status === "Active")
             .map((c) => c.name.toUpperCase())
         ),
-        experienceYearsByType: aggregateExperienceYears(units),
-        shadowingHours: shadowing.reduce((sum, sh) => sum + (sh.hours ?? 0), 0),
       };
 
       const newChecks: Check[] = [];
@@ -108,8 +110,17 @@ export default function SchoolDetailPage() {
         });
       }
 
-      if (catalogProgram && catalogProgram.requirements.length > 0) {
-        // Catalog-driven path: evaluate each requirement group
+      if (catalogProgram) {
+        // Catalog-driven path
+
+        // Critical care experience (uses the program's accept_* exclusions)
+        const ccCheck = evaluateCriticalCare(
+          catalogProgram,
+          aggregateQualifyingCriticalCare(units, catalogProgram)
+        );
+        if (ccCheck) newChecks.push(ccCheck);
+
+        // Prereqs + certs requirement groups
         for (const group of catalogProgram.requirements) {
           if (group.severity !== "required") continue; // skip "recommended"
           const result = evaluateRequirementGroup(group, userDataForGroups);
@@ -449,12 +460,24 @@ export default function SchoolDetailPage() {
   );
 }
 
-// Sum tenure (in years) per unit type across the user's hospital_units rows.
-// The result keys match the catalog's experience option `type` values
-// (icu, step_down, er, nicu, picu, ccu, ...). Falls back to "icu" for any
-// unit_name that mentions ICU and "er" for ED/Emergency.
-function aggregateExperienceYears(units: HospitalUnit[]): Record<string, number> {
-  const result: Record<string, number> = {};
+// Aggregate critical care experience that QUALIFIES for a specific
+// program. Walks the user's hospital_units rows, classifies each by
+// unit name, and excludes any unit type the program rejects.
+//
+// Returns total qualifying years plus a per-type breakdown for the
+// checklist detail line.
+type ProgramExclusions = {
+  accepts_er: boolean;
+  accepts_pacu: boolean;
+  accepts_nicu: boolean;
+  accepts_picu: boolean;
+};
+
+function aggregateQualifyingCriticalCare(
+  units: HospitalUnit[],
+  program: ProgramExclusions
+): { totalQualifyingYears: number; breakdown: { type: string; years: number }[] } {
+  const tally: Record<string, number> = {};
   const now = new Date();
   for (const unit of units) {
     if (!unit.start_date) continue;
@@ -472,23 +495,35 @@ function aggregateExperienceYears(units: HospitalUnit[]): Record<string, number>
     const years = months / 12;
 
     const name = (unit.unit_name ?? "").toLowerCase();
-    let type = "icu";
-    if (/step.?down/.test(name)) type = "step_down";
-    else if (/\b(er|ed|emergency)\b/.test(name)) type = "er";
-    else if (/nicu/.test(name)) type = "nicu";
+    // Classify the unit. Anything matching a critical-care keyword is
+    // considered qualifying — adult ICU/CCU/CVICU/trauma always count;
+    // ER/PACU/NICU/PICU only count if the program accepts them.
+    let type = "icu"; // default — generic ICU
+    if (/nicu/.test(name)) type = "nicu";
     else if (/picu/.test(name)) type = "picu";
-    else if (/\bccu\b/.test(name)) type = "ccu";
+    else if (/\b(er|ed|emergency)\b/.test(name)) type = "er";
+    else if (/pacu/.test(name)) type = "pacu";
     else if (/cvicu/.test(name)) type = "cvicu";
+    else if (/\bccu\b/.test(name)) type = "ccu";
     else if (/trauma/.test(name)) type = "trauma";
+    else if (/step.?down/.test(name)) type = "step_down";
 
-    result[type] = (result[type] ?? 0) + years;
-    // Also add to "icu" generically since the catalog uses icu as the
-    // baseline experience type for most programs
-    if (type !== "icu" && type !== "shadowing") {
-      result.icu = (result.icu ?? 0) + years;
-    }
+    // Apply program exclusions for the four toggleable subtypes
+    const excluded =
+      (type === "er" && !program.accepts_er) ||
+      (type === "pacu" && !program.accepts_pacu) ||
+      (type === "nicu" && !program.accepts_nicu) ||
+      (type === "picu" && !program.accepts_picu) ||
+      type === "step_down"; // step-down is not critical care
+    if (excluded) continue;
+
+    tally[type] = (tally[type] ?? 0) + years;
   }
-  return result;
+  const breakdown = Object.entries(tally)
+    .map(([type, years]) => ({ type, years }))
+    .sort((a, b) => b.years - a.years);
+  const totalQualifyingYears = breakdown.reduce((sum, b) => sum + b.years, 0);
+  return { totalQualifyingYears, breakdown };
 }
 
 function calculateIcuMonths(units: HospitalUnit[]): number {

@@ -6,18 +6,16 @@
 
 // ── Types (mirror Capnograph schema) ──────────────────────────────
 
-export type RequirementCategory = "prereqs" | "certifications" | "experience";
+// Categories deliberately exclude 'experience' — critical care experience
+// lives as flat columns on the program (critical_care_years_required +
+// accepts_er/pacu/nicu/picu).
+export type RequirementCategory = "prereqs" | "certifications";
 export type RequirementLogic = "ALL" | "ANY" | "N_OF";
 export type RequirementSeverity = "required" | "recommended";
 
 export type PrereqOption = { course: string };
 export type CertOption = { cert: string };
-export type ExperienceOption = {
-  type: string;
-  min_years?: number;
-  min_hours?: number;
-};
-export type RequirementOption = PrereqOption | CertOption | ExperienceOption;
+export type RequirementOption = PrereqOption | CertOption;
 
 export type RequirementGroup = {
   id?: string;
@@ -38,6 +36,7 @@ export type CatalogProgram = {
   state: string | null;
   degree_type: string | null;
   program_length_months: number | null;
+  app_opens: string | null;
   app_deadline: string | null;
   rolling_admissions: boolean;
   app_fee: number | null;
@@ -45,6 +44,12 @@ export type CatalogProgram = {
   gre_min_verbal: number | null;
   gre_min_quant: number | null;
   gre_required: string | null;
+  // Critical care experience (flat — see migration 008)
+  critical_care_years_required: number | null;
+  accepts_er: boolean;
+  accepts_pacu: boolean;
+  accepts_nicu: boolean;
+  accepts_picu: boolean;
   tuition_in_state: number | null;
   tuition_out_state: number | null;
   website: string | null;
@@ -102,13 +107,11 @@ import type { School } from "./types";
 export function catalogProgramToSchoolPrefill(
   p: CatalogProgram
 ): Partial<School> {
-  // Compute summary scalars from the requirement groups for the Tracker's
-  // simpler per-school fields (icu_years_required, requires_gre, requires_ccrn,
-  // min_shadowing_hours). Where the catalog has rich OR-logic, we pick the
-  // most permissive interpretation for the user's tracked target.
-  const minIcuYears = minIcuYearsFromRequirements(p.requirements);
+  // Critical care years comes straight from the catalog flat field;
+  // CCRN requirement is still derived from the cert requirement groups
+  // (since "CCRN OR PCCN" patterns matter); GRE requirement comes from
+  // the catalog gre_required string.
   const requiresCcrn = requirementsContainCert(p.requirements, "CCRN");
-  const minShadowing = minShadowingHoursFromRequirements(p.requirements);
   const requiresGre = p.gre_required === "Required";
 
   return {
@@ -124,10 +127,12 @@ export function catalogProgramToSchoolPrefill(
     min_gpa: p.suggested_gpa,
     min_gre_verbal: p.gre_min_verbal,
     min_gre_quantitative: p.gre_min_quant,
-    icu_years_required: minIcuYears,
+    icu_years_required: p.critical_care_years_required,
     requires_ccrn: requiresCcrn,
     requires_gre: requiresGre,
-    min_shadowing_hours: minShadowing,
+    // No min_shadowing_hours in the catalog model — Tracker still keeps
+    // its own column so the user can set their own target if they want.
+    min_shadowing_hours: null,
     tuition: p.tuition_in_state,
     website: p.website,
     source_program_id: p.id, // canonical UUID — survives slug renames
@@ -148,8 +153,6 @@ export function evaluateRequirementGroup(
   userData: {
     completedCourses: Set<string>; // PrereqCourse identifiers
     activeCerts: Set<string>; // uppercase cert names
-    experienceYearsByType: Record<string, number>; // type → years
-    shadowingHours: number;
   }
 ): ChecklistItem {
   let metCount = 0;
@@ -167,26 +170,6 @@ export function evaluateRequirementGroup(
       total++;
       if (userData.activeCerts.has(opt.cert.toUpperCase())) metCount++;
       labelParts.push(opt.cert);
-    }
-  } else if (group.category === "experience") {
-    for (const opt of group.options as ExperienceOption[]) {
-      total++;
-      if (opt.type === "shadowing") {
-        if (
-          opt.min_hours != null &&
-          userData.shadowingHours >= opt.min_hours
-        ) {
-          metCount++;
-        } else if (opt.min_hours == null && userData.shadowingHours > 0) {
-          metCount++;
-        }
-        labelParts.push(`shadowing${opt.min_hours ? ` ≥${opt.min_hours}h` : ""}`);
-      } else {
-        const years = userData.experienceYearsByType[opt.type] ?? 0;
-        if (opt.min_years != null && years >= opt.min_years) metCount++;
-        else if (opt.min_years == null && years > 0) metCount++;
-        labelParts.push(`${opt.type}${opt.min_years ? ` ≥${opt.min_years}y` : ""}`);
-      }
     }
   }
 
@@ -209,20 +192,35 @@ export function evaluateRequirementGroup(
   };
 }
 
-// ── Internal helpers ──────────────────────────────────────────────
-
-function minIcuYearsFromRequirements(reqs: RequirementGroup[]): number | null {
-  let min: number | null = null;
-  for (const g of reqs) {
-    if (g.category !== "experience" || g.severity !== "required") continue;
-    for (const opt of g.options as ExperienceOption[]) {
-      if (opt.type === "icu" && opt.min_years != null) {
-        if (min == null || opt.min_years < min) min = opt.min_years;
-      }
-    }
+// Critical care experience evaluator — flat catalog fields, not groups.
+// Returns a checklist item the school detail page can render directly.
+export function evaluateCriticalCare(
+  program: CatalogProgram,
+  userExperience: {
+    totalQualifyingYears: number;
+    breakdown: { type: string; years: number }[];
   }
-  return min;
+): ChecklistItem | null {
+  if (program.critical_care_years_required == null) return null;
+  const required = program.critical_care_years_required;
+  const met = userExperience.totalQualifyingYears >= required;
+  const excluded: string[] = [];
+  if (!program.accepts_er) excluded.push("ER");
+  if (!program.accepts_pacu) excluded.push("PACU");
+  if (!program.accepts_nicu) excluded.push("NICU");
+  if (!program.accepts_picu) excluded.push("PICU");
+  const exclusionTag = excluded.length > 0 ? ` (excludes ${excluded.join(", ")})` : "";
+  return {
+    label: `${required} year${required === 1 ? "" : "s"} of critical care experience${exclusionTag}`,
+    met,
+    detail:
+      userExperience.totalQualifyingYears === 0
+        ? "No qualifying experience added"
+        : `${userExperience.totalQualifyingYears.toFixed(1)} qualifying years (${userExperience.breakdown.map((b) => `${b.type} ${b.years.toFixed(1)}y`).join(", ")})`,
+  };
 }
+
+// ── Internal helpers ──────────────────────────────────────────────
 
 function requirementsContainCert(
   reqs: RequirementGroup[],
@@ -237,21 +235,6 @@ function requirementsContainCert(
         (o) => o.cert?.toUpperCase() === target
       )
   );
-}
-
-function minShadowingHoursFromRequirements(
-  reqs: RequirementGroup[]
-): number | null {
-  let min: number | null = null;
-  for (const g of reqs) {
-    if (g.category !== "experience" || g.severity !== "required") continue;
-    for (const opt of g.options as ExperienceOption[]) {
-      if (opt.type === "shadowing" && opt.min_hours != null) {
-        if (min == null || opt.min_hours < min) min = opt.min_hours;
-      }
-    }
-  }
-  return min;
 }
 
 // Parses a Notion-style free-text deadline ("November", "early November",
